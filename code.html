@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EasyNotes</title>
+    <style>
+        @font-face {
+            font-family: 'OpenDyslexic';
+            src: url('https://cdn.jsdelivr.net/gh/antijingoist/open-dyslexic/open-dyslexic-regular.otf') format('opentype');
+        }
+
+        body {
+            font-family: 'OpenDyslexic', Arial, sans-serif;
+            background-color: #d7d7c2;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            color: #1e1e1d;
+        }
+
+        header {
+            background-color: #6A98F0;
+            color: white;
+            padding: 1rem; /* Reduced padding for a smaller header */
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 2rem; /* Reduced font size for the header */
+        }
+
+        main {
+            padding: 3rem; /* Increased padding for more space in the main section */
+            max-width: 900px;
+            margin: 2rem auto;
+            background-color: rgba(238, 241, 196, 0.9);
+            border-radius: 15px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .tab-navigation {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .tab-button.active {
+            background-color: #81C784;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 12px 25px;
+            margin: 10px 5px;
+            background-color: #4CAF50; /* Changed to a solid color for consistency */
+            color: white;
+            border-radius: 30px;
+            cursor: pointer;
+        }
+
+        .input-section textarea {
+            width: 100%;
+            height: 200px; /* Increased height for better usability */
+            margin-bottom: 1rem;
+            font-family: 'OpenDyslexic', Arial, sans-serif;
+            font-size: 1.2rem; /* Increased font size for better readability */
+            padding: 10px;
+        }
+
+        #pdf-result, #simplified-result {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #e6f3e6; /* Light green for results */
+            border-radius: 5px;
+        }
+
+        .speech-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .speech-controls button {
+            margin-right: 10px; /* Space between buttons */
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>EasyNotes</h1>
+    </header>
+
+    <main>
+        <div class="tab-navigation">
+            <button class="tab-button active" onclick="openTab('pdf-tab')">PDF Upload</button>
+            <button class="tab-button" onclick="openTab('text-tab')">Text Simplification</button>
+            <button class="tab-button" onclick="openTab('speech-tab')">Speech Tools</button>
+            <button class="tab-button" onclick="openTab('notes-tab')">Notes</button>
+        </div>
+
+        <div id="pdf-tab" class="tab-content active">
+             <h2>Upload PDF</h2>
+             <p>Upload a PDF to simplify and convert its content.</p>
+             <input type="file" id="pdf-upload" accept="application/pdf">
+             <button class="button" onclick="handlePDFUpload()">Upload PDF</button>
+             <div id="pdf-result"></div>
+         </div>
+
+         <div id="text-tab" class="tab-content">
+             <h2>Text Simplification</h2>
+             <p>Enter text below to simplify:</p>
+             <textarea id="text-input" placeholder="Type or paste text here..."></textarea>
+             <button class="button" onclick="simplifyText()">Simplify Text</button>
+             <div id="simplified-result"></div>
+         </div>
+
+         <div id="speech-tab" class="tab-content">
+             <h2>Speech Tools</h2>
+             <div class="speech-controls">
+                 <textarea id="speech-input" placeholder="Text to convert to speech..."></textarea>
+                 <div>
+                     <button class="button" onclick="startSpeech()">Play</button>
+                     <button class="button" onclick="pauseSpeech()">Pause</button>
+                     <!-- Removed Stop button -->
+                 </div>
+             </div>
+             <div class="speech-controls">
+                 <button class="button" onclick="convertToText()">Speech to Text</button>
+             </div>
+         </div>
+
+         <div id="notes-tab" class="tab-content">
+             <h2>Download Notes</h2>
+             <p>Save and download your simplified content:</p>
+             <button class="button" onclick="saveSimplifiedText()">Save Text</button>
+             <a href="/download_pdf" download class="button">Download PDF</a>
+         </div>
+     </main>
+
+     <script>
+         let currentSpeech = null;
+
+         function openTab(tabName) {
+             const tabContents = document.querySelectorAll('.tab-content');
+             tabContents.forEach(tab => tab.classList.remove('active'));
+
+             const tabButtons = document.querySelectorAll('.tab-button');
+             tabButtons.forEach(button => button.classList.remove('active'));
+
+             document.getElementById(tabName).classList.add('active');
+             
+             event.target.classList.add('active');
+         }
+
+         function startSpeech() {
+             const text = document.getElementById('speech-input').value;
+
+             if (currentSpeech) {
+                 window.speechSynthesis.cancel();
+             }
+             
+             currentSpeech = new SpeechSynthesisUtterance(text);
+             window.speechSynthesis.speak(currentSpeech);
+         }
+
+         function pauseSpeech() {
+             window.speechSynthesis.pause();
+         }
+
+         async function handlePDFUpload() {
+             const fileInput = document.getElementById('pdf-upload');
+             const resultDiv = document.getElementById('pdf-result');
+             const file = fileInput.files[0];
+             
+             if (file) {
+                 const formData = new FormData();
+                 formData.append('pdf', file);
+
+                 try {
+                     const response = await fetch('/upload_pdf', { method:'POST', body : formData });
+                     const result = await response.json();
+                     if (result.simplified_text) {
+                         resultDiv.textContent = 'PDF processed successfully!';
+                         document.getElementById('text-input').value = result.simplified_text; 
+                     } else { 
+                         resultDiv.textContent = 'Error processing PDF'; 
+                     }
+                 } catch (error) { 
+                     resultDiv.textContent = 'Upload failed'; 
+                 }
+              } else { 
+                  alert('Please select a PDF file to upload.'); 
+              }
+          }
+
+          async function simplifyText() {
+              const textInput = document.getElementById('text-input');
+              const resultDiv = document.getElementById('simplified-result');
+
+              try {
+                  const response = await fetch('/simplify', { method:'POST', headers:{'Content-Type':'application/json'}, body : JSON.stringify({ text:textInput.value }) });
+                  const result = await response.json();
+                  if (result.simplified_text) {
+                      textInput.value = result.simplified_text; 
+                      resultDiv.textContent = 'Text simplified successfully!';
+                  } else { 
+                      resultDiv.textContent = 'Simplification failed'; 
+                  }
+              } catch (error) { 
+                  resultDiv.textContent = 'Simplification error'; 
+              }
+          }
+
+          async function saveSimplifiedText() {
+              const text = document.getElementById('text-input').value;
+
+              try { 
+                  const response = await fetch('/save_simplified', { method:'POST', headers:{'Content-Type':'application/json'}, body : JSON.stringify({ text:text, filename:'simplified_' + new Date().toISOString() + '.txt' }) });
+                  const result = await response.json(); 
+                  alert(result.message); 
+              } catch (error) { 
+                  alert('Failed to save text'); 
+              }
+          }
+
+          function convertToText() { 
+              const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)(); 
+              recognition.lang = 'en-US'; 
+              recognition.onresult = function(event) { 
+                  document.getElementById('speech-input').value = event.results[0][0].transcript; 
+              }; 
+              recognition.start(); 
+          }
+     </script>
+</body>
+</html>
