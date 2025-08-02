@@ -1,2 +1,6 @@
-Flask
-Flask‑CORS
+flask
+flask-cors
+PyPDF2
+gTTS
+fpdf
+nltk
