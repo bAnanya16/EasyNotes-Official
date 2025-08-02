@@ -77,7 +77,7 @@ def extract_text_from_pdf(pdf_path):
 
 @app.route('/')
 def index():
-    return render_template('code.html')
+    return render_template('index.html')
 
 @app.route('/simplify', methods=['POST'])
 def simplify():
@@ -165,6 +165,7 @@ def download_pdf():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)
+
 
 
 
